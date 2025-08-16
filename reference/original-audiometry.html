@@ -1,0 +1,428 @@
+!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizador de Audiometrías</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-logarithmic@1.2.1/dist/chartjs-adapter-logarithmic.min.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        /* Custom styles for file input */
+        .file-input-button {
+            cursor: pointer;
+            display: inline-block;
+        }
+        .file-input-label {
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="container mx-auto p-4 sm:p-6 md:p-8 max-w-4xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900">Analizador de Audiometrías</h1>
+            <p class="text-md text-gray-600 mt-2">Sube un archivo de datos (.XPT) para visualizar y analizar un audiograma.</p>
+        </header>
+
+        <main>
+            <div class="bg-white rounded-xl shadow-md p-6 sm:p-8 border border-gray-200">
+                <h2 class="text-xl font-semibold mb-4 text-center">Cargar Archivo de Datos</h2>
+                <div class="flex flex-col items-center">
+                    <input type="file" id="file-upload" class="hidden" accept=".xpt">
+                    <label for="file-upload" class="file-input-label w-full">
+                        <div id="drop-zone" class="flex justify-center items-center w-full h-48 border-2 border-dashed border-gray-300 rounded-lg text-center p-4 transition-all duration-300 hover:border-blue-500 hover:bg-blue-50">
+                            <div id="upload-prompt">
+                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48" aria-hidden="true">
+                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                </svg>
+                                <p class="mt-2 text-sm text-gray-500">
+                                    <span class="font-semibold text-blue-600">Haz clic para subir</span> o arrastra y suelta.
+                                </p>
+                                <p class="text-xs text-gray-500">Solo archivos .XPT</p>
+                            </div>
+                        </div>
+                    </label>
+                    <p id="file-name" class="mt-2 text-sm text-gray-600"></p>
+                    <button id="analyze-button" class="mt-4 w-full sm:w-auto bg-blue-600 text-white font-bold py-2 px-6 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 transition-transform duration-200 transform hover:scale-105 disabled:bg-gray-400 disabled:cursor-not-allowed" disabled>
+                        Analizar
+                    </button>
+                </div>
+            </div>
+
+            <div id="results-container" class="mt-8 bg-white rounded-xl shadow-md p-6 sm:p-8 border border-gray-200 hidden">
+                 <div id="loading-spinner" class="text-center hidden">
+                    <svg class="animate-spin -ml-1 mr-3 h-8 w-8 text-blue-600 inline-block" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                        <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    <p class="mt-2 text-gray-600">Cargando entorno y analizando...</p>
+                </div>
+                <div id="results-content" class="hidden">
+                    <h2 class="text-2xl font-bold text-center mb-6">Resultados del Participante <span id="participant-id" class="text-blue-600"></span></h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                        <div id="re-card" class="p-4 rounded-lg border-2 text-center">
+                            <h3 class="font-semibold text-lg">Oído Derecho</h3>
+                            <p id="loss-re" class="text-2xl font-bold"></p>
+                        </div>
+                        <div id="le-card" class="p-4 rounded-lg border-2 text-center">
+                            <h3 class="font-semibold text-lg">Oído Izquierdo</h3>
+                            <p id="loss-le" class="text-2xl font-bold"></p>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-center mb-4">Audiograma</h3>
+                        <canvas id="audiogram-chart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <footer class="text-center mt-12 text-sm text-gray-500">
+            <p>Generado a partir de un script de análisis de datos en Python.</p>
+        </footer>
+    </div>
+
+    <!-- Pyodide library (WASM version of Python) -->
+    <script src="https://cdn.jsdelivr.net/pyodide/v0.25.1/full/pyodide.js"></script>
+
+    <script>
+        // DOM Elements
+        const fileUpload = document.getElementById('file-upload');
+        const dropZone = document.getElementById('drop-zone');
+        const uploadPrompt = document.getElementById('upload-prompt');
+        const fileNameDisplay = document.getElementById('file-name');
+        const analyzeButton = document.getElementById('analyze-button');
+        const resultsContainer = document.getElementById('results-container');
+        const loadingSpinner = document.getElementById('loading-spinner');
+        const resultsContent = document.getElementById('results-content');
+        const participantIdSpan = document.getElementById('participant-id');
+        const lossReP = document.getElementById('loss-re');
+        const lossLeP = document.getElementById('loss-le');
+        const reCard = document.getElementById('re-card');
+        const leCard = document.getElementById('le-card');
+
+        let pyodide = null;
+        let uploadedFile = null;
+        let audiogramChart = null;
+
+        // Initialize Pyodide (Python environment in the browser)
+        async function main() {
+            // Show loading spinner while Pyodide loads
+            loadingSpinner.classList.remove('hidden');
+            resultsContainer.classList.remove('hidden');
+            
+            pyodide = await loadPyodide();
+            // Load pandas, which is a built-in package in Pyodide
+            await pyodide.loadPackage("pandas");
+            
+            console.log("Pyodide and pandas are ready.");
+            
+            // Hide spinner after loading
+            loadingSpinner.classList.add('hidden');
+            resultsContainer.classList.add('hidden');
+        }
+        main();
+
+        // --- Event Listeners for File Upload ---
+
+        fileUpload.addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+        
+        // Drag and Drop functionality
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.add('border-blue-500', 'bg-blue-50');
+        });
+
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                if (files[0].name.toLowerCase().endsWith('.xpt')) {
+                    handleFile(files[0]);
+                } else {
+                    alert('Por favor, sube un archivo con extensión .XPT');
+                }
+            }
+        });
+
+        function handleFile(file) {
+            if (file) {
+                uploadedFile = file;
+                fileNameDisplay.textContent = `Archivo seleccionado: ${file.name}`;
+                analyzeButton.disabled = false;
+                uploadPrompt.innerHTML = `<p class="text-lg text-green-600 font-semibold">¡Archivo listo!</p><p class="text-sm text-gray-500">${file.name}</p>`;
+            }
+        }
+
+        // --- Analysis Logic ---
+
+        analyzeButton.addEventListener('click', async () => {
+            if (!uploadedFile || !pyodide) {
+                alert("Por favor, selecciona un archivo primero o espera a que el entorno se cargue.");
+                return;
+            }
+
+            // Show loading state
+            resultsContainer.classList.remove('hidden');
+            loadingSpinner.classList.remove('hidden');
+            loadingSpinner.querySelector('p').textContent = 'Analizando datos...';
+            resultsContent.classList.add('hidden');
+            analyzeButton.disabled = true;
+            analyzeButton.textContent = 'Procesando...';
+
+            try {
+                // Read file into a buffer that Pyodide can access
+                const fileBuffer = await uploadedFile.arrayBuffer();
+                const uint8Array = new Uint8Array(fileBuffer);
+
+                // Write the file to Pyodide's virtual filesystem
+                pyodide.FS.writeFile("data.xpt", uint8Array, { encoding: "binary" });
+
+                // Run the Python analysis script within Pyodide
+                const results = await pyodide.runPythonAsync(`
+                    import pandas as pd
+                    import numpy as np
+                    import json
+
+                    # Read the file from the virtual filesystem using pandas
+                    df = pd.read_sas("data.xpt", format='xport')
+                    
+                    # --- Core Analysis Logic (from original script) ---
+                    participant_index = np.random.randint(0, len(df))
+                    row = df.iloc[participant_index]
+
+                    freqs = [500, 1000, 2000, 3000, 4000, 6000, 8000]
+
+                    thresholds_RE = [
+                        row.get('AUXU500R'),
+                        np.mean([row.get('AUXU1K1R', np.nan), row.get('AUXU1K2R', np.nan)]),
+                        row.get('AUXU2KR'),
+                        row.get('AUXU3KR'),
+                        row.get('AUXU4KR'),
+                        row.get('AUXU6KR'),
+                        row.get('AUXU8KR')
+                    ]
+
+                    thresholds_LE = [
+                        row.get('AUXU500L'),
+                        np.mean([row.get('AUXU1K1L', np.nan), row.get('AUXU1K2L', np.nan)]),
+                        row.get('AUXU2KL'),
+                        row.get('AUXU3KL'),
+                        row.get('AUXU4KL'),
+                        row.get('AUXU6KL'),
+                        row.get('AUXU8KL')
+                    ]
+                    
+                    # Handle potential NaN values by replacing them with None (which becomes null in JSON)
+                    thresholds_RE_safe = [float(x) if pd.notna(x) else None for x in thresholds_RE]
+                    thresholds_LE_safe = [float(x) if pd.notna(x) else None for x in thresholds_LE]
+
+                    # Function to calculate average threshold
+                    def avg_threshold(row, ear):
+                        keys = [f'AUXU500{ear}', f'AUXU1K1{ear}', f'AUXU1K2{ear}', f'AUXU2K{ear}', f'AUXU3K{ear}', f'AUXU4K{ear}']
+                        values = [row.get(k) for k in keys if pd.notna(row.get(k))]
+                        return np.mean(values) if values else None
+                    
+                    avg_RE = avg_threshold(row, 'R')
+                    avg_LE = avg_threshold(row, 'L')
+
+                    # Function to classify loss
+                    def classify_loss(avg):
+                        if avg is None:
+                            return 'Datos insuficientes'
+                        if avg <= 25:
+                            return 'Normal'
+                        elif avg <= 40:
+                            return 'Leve'
+                        elif avg <= 55:
+                            return 'Moderada'
+                        elif avg <= 70:
+                            return 'Severa'
+                        elif avg <= 90:
+                            return 'Profunda'
+                        else:
+                            return 'Muy Profunda'
+
+                    loss_RE = classify_loss(avg_RE)
+                    loss_LE = classify_loss(avg_LE)
+
+                    # Prepare results as a JSON string
+                    json.dumps({
+                        "participant_id": int(participant_index),
+                        "freqs": freqs,
+                        "thresholds_RE": thresholds_RE_safe,
+                        "thresholds_LE": thresholds_LE_safe,
+                        "loss_RE": loss_RE,
+                        "loss_LE": loss_LE
+                    })
+                `);
+
+                const data = JSON.parse(results);
+                displayResults(data);
+
+            } catch (error) {
+                console.error("Error during analysis:", error);
+                alert("Ocurrió un error al analizar el archivo. Asegúrate de que el formato es correcto y contiene las columnas esperadas (ej. AUXU500R, AUXU500L, etc).");
+            } finally {
+                // Hide loading state and restore button
+                loadingSpinner.classList.add('hidden');
+                resultsContent.classList.remove('hidden');
+                analyzeButton.disabled = false;
+                analyzeButton.textContent = 'Analizar de Nuevo';
+            }
+        });
+        
+        // --- Display Logic ---
+
+        function displayResults(data) {
+            participantIdSpan.textContent = data.participant_id;
+            lossReP.textContent = data.loss_RE;
+            lossLeP.textContent = data.loss_LE;
+
+            // Update card colors based on classification
+            updateCardStyle(reCard, lossReP, data.loss_RE);
+            updateCardStyle(leCard, lossLeP, data.loss_LE);
+
+            // Create chart if it doesn't exist, otherwise update it
+            if (audiogramChart) {
+                // If chart exists, update its data and redraw
+                audiogramChart.data.labels = data.freqs.map(String);
+                audiogramChart.data.datasets[0].data = data.thresholds_RE;
+                audiogramChart.data.datasets[1].data = data.thresholds_LE;
+                audiogramChart.update();
+            } else {
+                // If chart doesn't exist, create it
+                const ctx = document.getElementById('audiogram-chart').getContext('2d');
+                audiogramChart = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.freqs.map(String),
+                        datasets: [
+                            {
+                                label: 'Oído Derecho',
+                                data: data.thresholds_RE,
+                                borderColor: 'rgba(239, 68, 68, 1)', // red-500
+                                backgroundColor: 'rgba(239, 68, 68, 0.2)',
+                                pointStyle: 'circle',
+                                pointRadius: 6,
+                                pointHoverRadius: 8,
+                                tension: 0.1,
+                                spanGaps: true, // Connect lines over null data points
+                            },
+                            {
+                                label: 'Oído Izquierdo',
+                                data: data.thresholds_LE,
+                                borderColor: 'rgba(59, 130, 246, 1)', // blue-500
+                                backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                                pointStyle: 'crossRot',
+                                pointRadius: 6,
+                                pointHoverRadius: 8,
+                                borderDash: [5, 5],
+                                tension: 0.1,
+                                spanGaps: true,
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        scales: {
+                            y: {
+                                reverse: true, // Invert y-axis for audiograms
+                                beginAtZero: true,
+                                min: -10,
+                                max: 120,
+                                title: {
+                                    display: true,
+                                    text: 'Umbral de Audición (dB HL)'
+                                },
+                                ticks: {
+                                    stepSize: 10
+                                }
+                            },
+                            x: {
+                                type: 'logarithmic',
+                                title: {
+                                    display: true,
+                                    text: 'Frecuencia (Hz)'
+                                },
+                                ticks: {
+                                    callback: function(value, index, values) {
+                                        // This ensures that only the defined labels are shown
+                                        return data.freqs.includes(Number(this.getLabelForValue(value))) ? this.getLabelForValue(value) : '';
+                                    }
+                                }
+                            }
+                        },
+                        plugins: {
+                            tooltip: {
+                                callbacks: {
+                                    title: function(context) {
+                                        return `${context[0].label} Hz`;
+                                    },
+                                    label: function(context) {
+                                        if (context.parsed.y === null) {
+                                            return `${context.dataset.label}: Sin datos`;
+                                        }
+                                        return `${context.dataset.label}: ${context.parsed.y} dB HL`;
+                                    }
+                                }
+                            },
+                            legend: {
+                                position: 'top',
+                            }
+                        },
+                        interaction: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                    }
+                });
+            }
+             resultsContainer.scrollIntoView({ behavior: 'smooth' });
+        }
+
+        function updateCardStyle(cardElement, textElement, classification) {
+            // Reset classes
+            cardElement.className = 'p-4 rounded-lg border-2 text-center';
+            textElement.className = 'text-2xl font-bold';
+
+            const colorMap = {
+                'Normal': 'border-green-500 bg-green-50 text-green-700',
+                'Leve': 'border-yellow-500 bg-yellow-50 text-yellow-700',
+                'Moderada': 'border-orange-500 bg-orange-50 text-orange-700',
+                'Severa': 'border-red-500 bg-red-50 text-red-700',
+                'Profunda': 'border-purple-500 bg-purple-50 text-purple-700',
+                'Muy Profunda': 'border-indigo-500 bg-indigo-50 text-indigo-700',
+                'Datos insuficientes': 'border-gray-400 bg-gray-50 text-gray-600'
+            };
+            
+            const styles = colorMap[classification] || colorMap['Datos insuficientes'];
+            const [borderColor, bgColor, textColor] = styles.split(' ');
+
+            cardElement.classList.add(borderColor, bgColor);
+            textElement.classList.add(textColor);
+        }
+
+    </script>
+</body>
+</html>
