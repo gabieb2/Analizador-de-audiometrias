@@ -1,6 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { FileText, Upload, BarChart3, Download, Shuffle } from "lucide-react"
+import { FileText, Upload, BarChart3, Download, Shuffle, Github } from "lucide-react"
 
 export default function HelpTab() {
   return (
@@ -92,11 +92,12 @@ export default function HelpTab() {
         <CardContent className="space-y-4">
           <div className="space-y-3">
             <div className="flex items-start gap-3">
-              <Upload className="h-5 w-5 mt-0.5 text-blue-500" />
+              <BarChart3 className="h-5 w-5 mt-0.5 text-blue-500" />
               <div>
-                <h4 className="font-semibold">Subir Archivo</h4>
+                <h4 className="font-semibold">Pestaña Análisis</h4>
                 <p className="text-sm text-muted-foreground">
-                  Arrastra y suelta un archivo .XPT o haz clic para seleccionarlo desde tu computadora.
+                  La aplicación carga automáticamente una base de datos con 3860 registros reales de audiometría del
+                  NHANES 2011-2012. Usa "Generar Nuevo" para seleccionar participantes aleatorios.
                 </p>
               </div>
             </div>
@@ -104,19 +105,21 @@ export default function HelpTab() {
             <div className="flex items-start gap-3">
               <Shuffle className="h-5 w-5 mt-0.5 text-green-500" />
               <div>
-                <h4 className="font-semibold">Generar Nuevo</h4>
+                <h4 className="font-semibold">Generar Nuevo Participante</h4>
                 <p className="text-sm text-muted-foreground">
-                  Usa el botón "Generar Nuevo" para seleccionar un participante aleatorio de la base de datos integrada.
+                  Haz clic en "Generar Nuevo" para seleccionar aleatoriamente un participante de la base de datos y
+                  visualizar su audiograma con clasificación de pérdida auditiva.
                 </p>
               </div>
             </div>
 
             <div className="flex items-start gap-3">
-              <BarChart3 className="h-5 w-5 mt-0.5 text-purple-500" />
+              <Upload className="h-5 w-5 mt-0.5 text-purple-500" />
               <div>
-                <h4 className="font-semibold">Visualizar Resultados</h4>
+                <h4 className="font-semibold">Generar Audiograma Propio</h4>
                 <p className="text-sm text-muted-foreground">
-                  Los resultados muestran la clasificación de pérdida auditiva y el audiograma interactivo.
+                  En la pestaña "Generar Propio", puedes crear audiogramas personalizados ingresando valores de vía
+                  aérea y conducción ósea manualmente.
                 </p>
               </div>
             </div>
@@ -124,30 +127,13 @@ export default function HelpTab() {
             <div className="flex items-start gap-3">
               <Download className="h-5 w-5 mt-0.5 text-orange-500" />
               <div>
-                <h4 className="font-semibold">Descargar</h4>
+                <h4 className="font-semibold">Descargar Audiograma</h4>
                 <p className="text-sm text-muted-foreground">
-                  Haz clic en "Descargar PNG" para guardar el audiograma como imagen.
+                  Usa el botón "Descargar PNG" para guardar el audiograma como imagen. Para audiogramas con vía ósea, se
+                  descargan gráficos separados por oído.
                 </p>
               </div>
             </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Formatos Soportados</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            <div className="flex items-center gap-2">
-              <Badge variant="secondary">.XPT</Badge>
-              <span className="text-sm text-muted-foreground">Archivos de transporte SAS</span>
-            </div>
-            <p className="text-sm text-muted-foreground mt-2">
-              La aplicación incluye una base de datos integrada con datos reales de audiometría que puedes usar con el
-              botón "Generar Nuevo".
-            </p>
           </div>
         </CardContent>
       </Card>
@@ -196,10 +182,20 @@ export default function HelpTab() {
           <CardTitle>Créditos</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="space-y-2">
+          <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Desarrollador:</span>
-              <span className="text-sm text-muted-foreground">Gabriel Beinotti</span>
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-muted-foreground">Gabriel Beinotti</span>
+                <a
+                  href="https://github.com/gabieb2"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-gray-600 hover:text-gray-800 transition-colors"
+                >
+                  <Github className="h-4 w-4" />
+                </a>
+              </div>
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Fuente de Datos:</span>
@@ -208,6 +204,18 @@ export default function HelpTab() {
             <div className="flex items-center justify-between">
               <span className="text-sm font-medium">Tecnologías:</span>
               <span className="text-sm text-muted-foreground">Next.js, Chart.js, Tailwind CSS</span>
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm font-medium">Contacto:</span>
+              <a
+                href="https://instagram.com/lab_ia.fono/"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 text-pink-600 hover:text-pink-800 transition-colors"
+              >
+                <img src="/instagram-logo-pink-gradient.png" alt="Instagram" className="h-5 w-5" />
+                <span className="text-sm">@lab_ia.fono</span>
+              </a>
             </div>
           </div>
         </CardContent>
